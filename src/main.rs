@@ -21,19 +21,15 @@ fn main() {
     let mut saved_max: f32 = 1000.0;
     let mut saved_rgb: RGB<u8> = RGB::new(0, 0, 0);
 
-    let error_margin = std::f32::EPSILON;
-
-    // '1' tests 0, 255; '2' tests 0, 128, 255; '3' tests 0, 85, 170, 255;
-    // '4' tests 0, 64, 128, 192, 255; etc.
-    let quantize: f32 = 1_f32;
+    let quantize = 255;
 
     // Iterate through all sRGB colors
     for r in 0..=255 {
         for g in 0..=255 {
             for b in 0..=255 {
-                let lab = srgb_to_oklab(RGB::new(r, g, b));
+                let lab: Oklab = srgb_to_oklab(RGB::new(r, g, b));
 
-                // Lightness restriction for speedup
+                // Lightness restriction for speedup and to get rid of really bright or dark ones
                 if lab.l < 0.4 || lab.l > 0.6 {
                     continue;
                 };
@@ -42,14 +38,11 @@ fn main() {
 
                 // Instead of iterating through the whole sRGB color space per color,
                 // we just iterate though a few select ones
-                for r2 in 0..=quantize as usize {
-                    for g2 in 0..=quantize as usize {
-                        for b2 in 0..=quantize as usize {
-                            let lab2 = srgb_to_oklab(RGB::new(
-                                (r2 as f32 * 255.0 / quantize).ceil() as u8,
-                                (g2 as f32 * 255.0 / quantize).ceil() as u8,
-                                (b2 as f32 * 255.0 / quantize).ceil() as u8,
-                            ));
+                // It's probably fine to just use 0 or 255, but decrease quantize for completeness
+                for r2 in (0..=255).step_by(quantize) {
+                    for g2 in (0..=255).step_by(quantize) {
+                        for b2 in (0..=255).step_by(quantize) {
+                            let lab2: Oklab = srgb_to_oklab(RGB::new(r2, g2, b2));
 
                             // Get the difference and save if it's the max
                             let delta = diff(&lab, &lab2);
@@ -61,13 +54,14 @@ fn main() {
                 }
 
                 // If this color's max is lower than the overall max, then save it
-                if (local_max - saved_max).abs() < error_margin {
-                    // Used if the differences are equal
-                    println!("Equivalent delta detected!");
-                    saved_max = local_max;
-                    saved_rgb = RGB::new(r, g, b);
-                }
                 if local_max < saved_max {
+                    // Used if the differences are equal
+                    if (local_max - saved_max).abs() < std::f32::EPSILON {
+                        println!("\nEquivalent delta detected! saved_max: {}", saved_max);
+                        println!("Previous RGB: {:?}", saved_rgb);
+                        println!("Current RGB: {:?}", RGB::new(r, g, b));
+                    }
+
                     saved_max = local_max;
                     saved_rgb = RGB::new(r, g, b);
                 }
@@ -76,7 +70,7 @@ fn main() {
     }
 
     // Print results
-    println!("RGB Color: {:?}", saved_rgb);
+    println!("\nRGB Color: {:?}", saved_rgb);
     println!("Oklab Color: {:?}", srgb_to_oklab(saved_rgb));
     println!("Color difference of: {:?}", saved_max);
 
