@@ -1,6 +1,7 @@
 /*
 Goals:
  - Use a uniform color space better than CIELAB like Oklab
+   - Done, but remember to update with an even better one
 */
 
 extern crate oklab;

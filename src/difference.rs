@@ -1,8 +1,8 @@
 /*
 Goals:
  - Figure out and use a good color difference formula
-  - HyAB color difference formula is currently used,
-    but it originally used CIELAB inputs
+   - HyAB color difference formula is currently used,
+     but it originally used CIELAB inputs
 */
 
 extern crate oklab;
