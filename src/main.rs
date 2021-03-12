@@ -1,19 +1,14 @@
 /*
 Goals:
-- Use a uniform color space better than CIELAB like Oklab
-- Figure out and use a good color difference formula
-  - HyAB color difference formula is currently used,
-    but it originally used CIELAB inputs
+ - Use a uniform color space better than CIELAB like Oklab
 */
 
 extern crate oklab;
 use oklab::*;
 
-use std::time::SystemTime;
+mod difference;
 
-fn diff(lab: &Oklab, lab2: &Oklab) -> f32 {
-    (lab.l - lab2.l).abs() + ((lab.a - lab2.a).powi(2) + (lab.b - lab2.b).powi(2)).sqrt()
-}
+use std::time::SystemTime;
 
 fn main() {
     let start = SystemTime::now();
@@ -45,7 +40,7 @@ fn main() {
                             let lab2: Oklab = srgb_to_oklab(RGB::new(r2, g2, b2));
 
                             // Get the difference and save if it's the max
-                            let delta = diff(&lab, &lab2);
+                            let delta = difference::diff(&lab, &lab2);
                             if delta > local_max {
                                 local_max = delta;
                             }
