@@ -40,7 +40,7 @@ fn main() {
                             let lab2: Oklab = srgb_to_oklab(RGB::new(r2, g2, b2));
 
                             // Get the difference and save if it's the max
-                            let delta = difference::diff(&lab, &lab2);
+                            let delta = difference::hyab(&lab, &lab2);
                             if delta > local_max {
                                 local_max = delta;
                             }
