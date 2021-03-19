@@ -2,6 +2,7 @@
 Goals:
  - Use a uniform color space better than CIELAB like Oklab
    - Done, but remember to update with an even better one
+ - Additional goals in difference.rs
 */
 
 extern crate oklab;
@@ -25,10 +26,10 @@ fn main() {
             for b in 0..=255 {
                 let lab: Oklab = srgb_to_oklab(RGB::new(r, g, b));
 
-                // Lightness restriction for speedup and to get rid of really bright or dark ones
+                /* Lightness restriction for speedup and to get rid of really bright or dark ones
                 if lab.l < 0.4 || lab.l > 0.6 {
                     continue;
-                };
+                };*/
 
                 let mut local_max: f32 = 0.0;
 
@@ -52,7 +53,7 @@ fn main() {
                 // If this color's max is lower than the overall max, then save it
                 if local_max < saved_max {
                     // Used if the differences are equal
-                    if (local_max - saved_max).abs() < std::f32::EPSILON {
+                    if (local_max - saved_max).abs() < f32::EPSILON {
                         println!("\nEquivalent delta detected! saved_max: {}", saved_max);
                         println!("Previous RGB: {:?}", saved_rgb);
                         println!("Current RGB: {:?}", RGB::new(r, g, b));
@@ -66,12 +67,20 @@ fn main() {
     }
 
     // Print results
-    println!("\nRGB Color: {:?}", saved_rgb);
-    println!("Oklab Color: {:?}", srgb_to_oklab(saved_rgb));
-    println!("Color difference of: {:?}", saved_max);
+    println!(
+        "\nRGB Color: ({}, {}, {})",
+        saved_rgb.r, saved_rgb.g, saved_rgb.b
+    );
+    println!(
+        "Oklab Color: ({}, {}, {})",
+        srgb_to_oklab(saved_rgb).l,
+        srgb_to_oklab(saved_rgb).a,
+        srgb_to_oklab(saved_rgb).b
+    );
+    println!("Color difference: {:?}", saved_max);
 
     // Print runtime
     let end = SystemTime::now();
     let runtime = end.duration_since(start).expect("bad time");
-    println!("{:?}", runtime);
+    println!("Runtime: {:?}", runtime);
 }
