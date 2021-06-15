@@ -1,86 +1,67 @@
-/*
-Goals:
- - Use a uniform color space better than CIELAB like Oklab
-   - Done, but remember to update with an even better one
- - Additional goals in difference.rs
-*/
-
-extern crate oklab;
 use oklab::*;
 
-mod difference;
+#[inline]
+fn difference(lab1: Oklab, lab2: Oklab) -> f32 {
+    // HyAB color difference formula
+    // Absolute difference between L, Euclidian distance between a and b
+    // Made for L*a*b*, but probably works here
+    (lab1.l - lab2.l).abs() + (lab1.a - lab2.a).hypot(lab1.b - lab2.b)
+}
 
-use std::time::SystemTime;
+fn opposite(rgb: RGB<u8>) -> (RGB<u8>, f32) {
+    // Generates the opposite color of a given RGB<u8>
+    // Returns the opposite color and the difference
 
-fn main() {
-    let start = SystemTime::now();
+    let input_lab = srgb_to_oklab(rgb);
+    let mut max = 0.0;
 
-    let mut saved_max: f32 = 1000.0;
-    let mut saved_rgb: RGB<u8> = RGB::new(0, 0, 0);
+    // L ~= 0.5, a ~= 0.0, b ~= 0.0
+    // If your result is this, something went wrong
+    let mut saved = RGB {
+        r: 99,
+        g: 99,
+        b: 99
+    };
 
-    let quantize = 255;
+    // All opposite colors are observed to be 1-bit colors
+    // So, only 0 and 255 are possible color channel values
+    for r in &[0, 255] {
+        for g in &[0, 255] {
+            for b in &[0, 255] {
+                let test = RGB { r: *r, g: *g, b: *b };
+                let test_lab = srgb_to_oklab(test);
 
-    // Iterate through all sRGB colors
-    for r in 0..=255 {
-        for g in 0..=255 {
-            for b in 0..=255 {
-                let lab: Oklab = srgb_to_oklab(RGB::new(r, g, b));
+                let delta = difference(input_lab, test_lab);
 
-                /* Lightness restriction for speedup and to get rid of really bright or dark ones
-                if lab.l < 0.4 || lab.l > 0.6 {
-                    continue;
-                };*/
-
-                let mut local_max: f32 = 0.0;
-
-                // Instead of iterating through the whole sRGB color space per color,
-                // we just iterate though a few select ones
-                // It's probably fine to just use 0 or 255, but decrease quantize for completeness
-                for r2 in (0..=255).step_by(quantize) {
-                    for g2 in (0..=255).step_by(quantize) {
-                        for b2 in (0..=255).step_by(quantize) {
-                            let lab2: Oklab = srgb_to_oklab(RGB::new(r2, g2, b2));
-
-                            // Get the difference and save if it's the max
-                            let delta = difference::hyab(&lab, &lab2);
-                            if delta > local_max {
-                                local_max = delta;
-                            }
-                        }
-                    }
-                }
-
-                // If this color's max is lower than the overall max, then save it
-                if local_max < saved_max {
-                    // Used if the differences are equal
-                    if (local_max - saved_max).abs() < f32::EPSILON {
-                        println!("\nEquivalent delta detected! saved_max: {}", saved_max);
-                        println!("Previous RGB: {:?}", saved_rgb);
-                        println!("Current RGB: {:?}", RGB::new(r, g, b));
-                    }
-
-                    saved_max = local_max;
-                    saved_rgb = RGB::new(r, g, b);
+                if delta > max {
+                    max = delta;
+                    saved = test;
                 }
             }
         }
     }
 
-    // Print results
-    println!(
-        "\nRGB Color: ({}, {}, {})",
-        saved_rgb.r, saved_rgb.g, saved_rgb.b
-    );
-    println!(
-        "Oklab Color: ({}, {}, {})",
-        srgb_to_oklab(saved_rgb).l,
-        srgb_to_oklab(saved_rgb).a,
-        srgb_to_oklab(saved_rgb).b
-    );
-    println!("Color difference: {:?}", saved_max);
+    (saved, max)
+}
 
-    // Print runtime
-    let end = SystemTime::now();
-    let runtime = end.duration_since(start).expect("bad time");
-    println!("Runtime: {:?}", runtime);
+fn main() {
+    let mut limit = 1000.0;
+    let mut saved = RGB { r: 0, g: 0, b: 0 };
+
+    for r in 0..=255 {
+        for g in 0..=255 {
+            for b in 0..=255 {
+                let input = RGB { r, g, b };
+                let color = opposite(input);
+
+                if color.1 < limit {
+                    limit = color.1;
+                    saved = input;
+                }
+            }
+        }
+    }
+
+    println!("Opposite: {:?}", saved);
+    println!("Delta: {:?}", limit);
 }
