@@ -6,4 +6,4 @@ Currently generates `(109, 110, 66)`: has the __lowest maximum__ color differenc
 
 After experimentation, `(169, 128, 149)` has the __lowest average__ color difference of `0.2855817`. For comparison, `(109, 110, 66)` has a higher average of `0.34246653`
 
-After experimentation, `(151, 126, 141)` has the __lowest median__ color difference of `0.2771513`. For comparison, `(109, 110, 66)` has a higher average of `0.32988155`
+After experimentation, `(151, 126, 141)` has the __lowest median__ color difference of `0.2771513`. For comparison, `(109, 110, 66)` has a higher median of `0.32988155`
