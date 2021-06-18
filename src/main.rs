@@ -62,6 +62,6 @@ fn main() {
         }
     }
 
-    println!("Opposite: {:?}", saved);
+    println!("Neutral: {:?}", saved);
     println!("Delta: {:?}", limit);
 }
